@@ -92,7 +92,7 @@ void AddMenus(HWND hWnd)
     HMENU hFileMenu = CreateMenu(); // file menu popup
     HMENU hSubMenu  = CreateMenu();
 
-    AppendMenu(hSubMenu, MF_STRING, CHANGE_TITLE, "Change Title");
+    AppendMenu(hSubMenu, MF_STRING, NULL, "Sub Menu Item"); // changed to dummy menu item
 
     AppendMenu(hFileMenu, MF_STRING, FILE_MENU_NEW, "New");
     AppendMenu(hFileMenu, MF_STRING, FILE_MENU_OPEN, "Open");
@@ -112,6 +112,8 @@ void AddControls(HWND hWnd)
     CreateWindowW(L"Static", L"Enter text here:", WS_VISIBLE | WS_CHILD | WS_BORDER | SS_CENTER, 200, 100, 100, 50, hWnd, NULL, NULL, NULL);
 
     hEdit = CreateWindowW(L"Edit", L"...", WS_VISIBLE | WS_CHILD | WS_BORDER | ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL, 200, 152, 100, 50, hWnd, NULL, NULL, NULL);
+
+    CreateWindowW(L"Button", L"Change Title", WS_VISIBLE | WS_CHILD, 200, 204, 100, 50, hWnd, (HMENU) CHANGE_TITLE, NULL, NULL);
 }
 
 /*** end of file ***/
@@ -122,4 +124,5 @@ void AddControls(HWND hWnd)
     https://www.youtube.com/watch?v=8GCvZs55mEM&t=68s
     https://www.youtube.com/watch?v=7K6HCeog09c
     https://www.youtube.com/watch?v=9JMQkUOhW1s
+    https://www.youtube.com/watch?v=o2NkH5xxDQs
 */

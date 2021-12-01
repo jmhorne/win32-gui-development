@@ -3,14 +3,18 @@
 #define FILE_MENU_NEW  1
 #define FILE_MENU_OPEN 2
 #define FILE_MENU_EXIT 3
+#define CHANGE_TITLE   4
 
 #pragma comment(lib, "user32.lib")
 
 LRESULT CALLBACK WindowProcedure(HWND, UINT, WPARAM, LPARAM);
 
+/* Prototypes */
 void AddMenus(HWND);
+void AddControls(HWND);
 
 HMENU hMenu;
+HWND  hEdit;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hprevInstance, LPSTR args, int ncmdshow)
 {
@@ -50,6 +54,7 @@ LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 
         case WM_CREATE:
             AddMenus(hWnd);
+            AddControls(hWnd);
         break;
 
         case WM_COMMAND:
@@ -66,6 +71,12 @@ LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                 case FILE_MENU_OPEN:
                     MessageBeep(MB_OK);
                 break;
+
+                case CHANGE_TITLE:
+                    wchar_t text[100] = {0};
+                    GetWindowTextW(hEdit, text, 100);
+                    SetWindowTextW(hWnd, text);
+                break;
             }
         break;
 
@@ -81,7 +92,7 @@ void AddMenus(HWND hWnd)
     HMENU hFileMenu = CreateMenu(); // file menu popup
     HMENU hSubMenu  = CreateMenu();
 
-    AppendMenu(hSubMenu, MF_STRING, NULL, "SubMenu Item");
+    AppendMenu(hSubMenu, MF_STRING, CHANGE_TITLE, "Change Title");
 
     AppendMenu(hFileMenu, MF_STRING, FILE_MENU_NEW, "New");
     AppendMenu(hFileMenu, MF_STRING, FILE_MENU_OPEN, "Open");
@@ -96,6 +107,13 @@ void AddMenus(HWND hWnd)
     SetMenu(hWnd, hMenu);
 }
 
+void AddControls(HWND hWnd)
+{
+    CreateWindowW(L"Static", L"Enter text here:", WS_VISIBLE | WS_CHILD | WS_BORDER | SS_CENTER, 200, 100, 100, 50, hWnd, NULL, NULL, NULL);
+
+    hEdit = CreateWindowW(L"Edit", L"...", WS_VISIBLE | WS_CHILD | WS_BORDER | ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL, 200, 152, 100, 50, hWnd, NULL, NULL, NULL);
+}
+
 /*** end of file ***/
 
 /*
@@ -103,4 +121,5 @@ void AddMenus(HWND hWnd)
 
     https://www.youtube.com/watch?v=8GCvZs55mEM&t=68s
     https://www.youtube.com/watch?v=7K6HCeog09c
+    https://www.youtube.com/watch?v=9JMQkUOhW1s
 */

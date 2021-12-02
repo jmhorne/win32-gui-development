@@ -52,6 +52,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hprevInstance, LPSTR args, int
 /** Private functions **/
 LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
+    int val;
+
     switch (msg)
     {
         case WM_DESTROY:
@@ -68,7 +70,12 @@ LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
             switch (wp)
             {
                 case FILE_MENU_EXIT:
-                    DestroyWindow(hWnd);
+                    val = MessageBoxW(hWnd, L"Are you sure?", L"Wait!", MB_YESNO | MB_ICONEXCLAMATION);
+
+                    if (val == IDYES)
+                    {
+                        DestroyWindow(hWnd);
+                    }
                 break;
 
                 case FILE_MENU_NEW:
@@ -84,6 +91,24 @@ LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 
                     GetWindowText(hName, name, 30);
                     GetWindowText(hAge, age, 10);
+
+                    if (strcmp(name, "") == 0 || strcmp(age, "") == 0)
+                    {
+                        val = MessageBoxW(hWnd, L"You did not enter anything!", NULL, MB_ABORTRETRYIGNORE | MB_ICONERROR); // NULL defaults to error
+
+                        switch (val)
+                        {
+                            case IDABORT:
+                                DestroyWindow(hWnd);
+                            break;
+
+                            case IDRETRY:
+                            return 0;
+                            
+                            case IDIGNORE:
+                            break;
+                        }
+                    }
 
                     strcpy(out, name);
                     strcat(out, " is ");
@@ -150,9 +175,10 @@ void loadImages()
 /*
     References
 
-    https://www.youtube.com/watch?v=8GCvZs55mEM&t=68s
-    https://www.youtube.com/watch?v=7K6HCeog09c
-    https://www.youtube.com/watch?v=9JMQkUOhW1s
-    https://www.youtube.com/watch?v=o2NkH5xxDQs
-    https://www.youtube.com/watch?v=PTjlGiCvYZU
+    01 - https://www.youtube.com/watch?v=8GCvZs55mEM&t=68s
+    02 - https://www.youtube.com/watch?v=7K6HCeog09c
+    03 - https://www.youtube.com/watch?v=9JMQkUOhW1s
+    04 - https://www.youtube.com/watch?v=o2NkH5xxDQs
+    05 - https://www.youtube.com/watch?v=PTjlGiCvYZU
+    06 - https://www.youtube.com/watch?v=R7RvaQR-mm0
 */

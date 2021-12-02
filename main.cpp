@@ -14,10 +14,12 @@ LRESULT CALLBACK WindowProcedure(HWND, UINT, WPARAM, LPARAM);
 void AddMenus(HWND);
 void AddControls(HWND);
 void loadImages();
+void registerDialogClass(HINSTANCE);
+void displayDialog(HWND hWnd);
 
 /** Gobal Variables **/
 HMENU   hMenu;
-HWND    hName, hAge, hOut, hLogo;
+HWND    hName, hAge, hOut, hLogo, hMainWindow;
 HBITMAP hLogoImage, hGenerateImage;
 
 /** Program Entry Point **/
@@ -36,7 +38,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hprevInstance, LPSTR args, int
         return -1;
     }
 
-    CreateWindowW(L"myWindowClass", L"My Window", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 500, 500, NULL, NULL, NULL, NULL);
+    registerDialogClass(hInstance);
+
+    hMainWindow = CreateWindowW(L"myWindowClass", L"My Window", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 500, 500, NULL, NULL, NULL, NULL);
 
     MSG msg = {0};
 
@@ -80,6 +84,7 @@ LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 
                 case FILE_MENU_NEW:
                     MessageBeep(MB_NOFOCUS);
+                    displayDialog(hWnd);
                 break;
 
                 case FILE_MENU_OPEN:
@@ -170,6 +175,54 @@ void loadImages()
     hGenerateImage = (HBITMAP) LoadImageW(NULL, L"gen_btn.bmp", IMAGE_BITMAP, 98, 38, LR_LOADFROMFILE);
 }
 
+LRESULT CALLBACK DialogProcedure (HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    switch (msg)
+    {
+        case WM_CLOSE:
+            EnableWindow(hMainWindow, true);
+            DestroyWindow(hWnd);
+        break;
+
+        case WM_COMMAND:
+
+            switch (wp)
+            {
+                case 1:
+                    EnableWindow(hMainWindow, true);
+                    DestroyWindow(hWnd);
+                break;
+            }
+
+        break;
+
+        default:
+            return DefWindowProcW(hWnd, msg, wp, lp);
+    }
+}
+
+void registerDialogClass(HINSTANCE hInstance)
+{
+    WNDCLASSW dialog = {0};
+
+    dialog.hbrBackground = (HBRUSH) COLOR_WINDOW;
+    dialog.hCursor       = LoadCursor(NULL, IDC_CROSS);
+    dialog.hInstance     = hInstance;
+    dialog.lpszClassName = L"myDialogClass";
+    dialog.lpfnWndProc   = DialogProcedure;
+
+    RegisterClassW(&dialog);
+}
+
+void displayDialog(HWND hWnd)
+{
+    HWND hDlg = CreateWindowW(L"myDialogClass", L"Dialog", WS_VISIBLE | WS_OVERLAPPEDWINDOW, 400, 400, 200, 200, hWnd, NULL, NULL, NULL);
+
+    CreateWindowW(L"Button", L"Close", WS_VISIBLE | WS_CHILD, 20, 20, 100, 40, hDlg, (HMENU) 1, NULL, NULL);
+
+    EnableWindow(hWnd, false); // disables parent window (modal)
+}
+
 /*** end of file ***/
 
 /*
@@ -181,4 +234,5 @@ void loadImages()
     04 - https://www.youtube.com/watch?v=o2NkH5xxDQs
     05 - https://www.youtube.com/watch?v=PTjlGiCvYZU
     06 - https://www.youtube.com/watch?v=R7RvaQR-mm0
+    07 - https://www.youtube.com/watch?v=6WJ_fljFmF0
 */

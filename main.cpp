@@ -1,26 +1,18 @@
 #include <Windows.h>
 #include <stdlib.h>
+#include <stdio.h>
 
-#define FILE_MENU_NEW   1
-#define FILE_MENU_OPEN  2
-#define FILE_MENU_EXIT  3
-#define GENERATE_BUTTON 4
+#define OPEN_BUTTON 1
 
 #pragma comment(lib, "user32.lib")
-
-LRESULT CALLBACK WindowProcedure(HWND, UINT, WPARAM, LPARAM);
+#pragma comment(lib, "Comdlg32.lib") // used for GetOpenFileName
 
 /** Prototypes **/
-void AddMenus(HWND);
+LRESULT CALLBACK WindowProcedure(HWND, UINT, WPARAM, LPARAM);
 void AddControls(HWND);
-void loadImages();
-void registerDialogClass(HINSTANCE);
-void displayDialog(HWND hWnd);
 
 /** Gobal Variables **/
-HMENU   hMenu;
-HWND    hName, hAge, hOut, hLogo, hMainWindow;
-HBITMAP hLogoImage, hGenerateImage;
+HWND    hMainWindow, hEdit;
 
 /** Program Entry Point **/
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hprevInstance, LPSTR args, int ncmdshow)
@@ -38,8 +30,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hprevInstance, LPSTR args, int
         return -1;
     }
 
-    registerDialogClass(hInstance);
-
     hMainWindow = CreateWindowW(L"myWindowClass", L"My Window", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 500, 500, NULL, NULL, NULL, NULL);
 
     MSG msg = {0};
@@ -54,6 +44,55 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hprevInstance, LPSTR args, int
 }
 
 /** Private functions **/
+
+void display_file(char * path)
+{
+    FILE * file = fopen(path, "rb");
+
+    FILE * log = fopen("log.txt", "a");
+
+    fseek(file, 0, SEEK_END);
+
+    int size = ftell(file);
+
+    fprintf(log, "\n%s size: %d\n", path, size);
+
+    rewind(file);
+
+    char * data = (char *) calloc(size, sizeof(char));
+
+    fread(data, size, 1, file);
+
+    SetWindowText(hEdit, data);
+
+    free(data);
+    fclose(file);
+    fclose(log);
+}
+
+void open_file(HWND hWnd)
+{
+    OPENFILENAME ofn;
+    ZeroMemory(&ofn, sizeof(OPENFILENAME));
+
+    char filename[100] = {0};
+
+    ofn.lStructSize  = sizeof(OPENFILENAME);
+    ofn.hwndOwner    = hWnd;
+    ofn.lpstrFile    = filename;
+    ofn.nMaxFile     = 100;
+    ofn.lpstrFilter  = "All files\0*.*\0Source Files\0*.CPP\0Text Files\0*.TXT\0";
+    ofn.nFilterIndex = 1;
+
+    GetOpenFileName(&ofn);
+
+    if (strcmp((char *) ofn.lpstrFile, "") != 0)
+    {
+        display_file((char *) ofn.lpstrFile);
+    }
+
+}
+
 LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     int val;
@@ -65,64 +104,15 @@ LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
         break;
 
         case WM_CREATE:
-            loadImages();
-            AddMenus(hWnd);
             AddControls(hWnd);
         break;
 
         case WM_COMMAND:
             switch (wp)
             {
-                case FILE_MENU_EXIT:
-                    val = MessageBoxW(hWnd, L"Are you sure?", L"Wait!", MB_YESNO | MB_ICONEXCLAMATION);
-
-                    if (val == IDYES)
-                    {
-                        DestroyWindow(hWnd);
-                    }
+                case OPEN_BUTTON:
+                    open_file(hWnd);
                 break;
-
-                case FILE_MENU_NEW:
-                    MessageBeep(MB_NOFOCUS);
-                    displayDialog(hWnd);
-                break;
-
-                case FILE_MENU_OPEN:
-                    MessageBeep(MB_OK);
-                break;
-
-                case GENERATE_BUTTON:
-                    char name[30], age[10], out[50];
-
-                    GetWindowText(hName, name, 30);
-                    GetWindowText(hAge, age, 10);
-
-                    if (strcmp(name, "") == 0 || strcmp(age, "") == 0)
-                    {
-                        val = MessageBoxW(hWnd, L"You did not enter anything!", NULL, MB_ABORTRETRYIGNORE | MB_ICONERROR); // NULL defaults to error
-
-                        switch (val)
-                        {
-                            case IDABORT:
-                                DestroyWindow(hWnd);
-                            break;
-
-                            case IDRETRY:
-                            return 0;
-                            
-                            case IDIGNORE:
-                            break;
-                        }
-                    }
-
-                    strcpy(out, name);
-                    strcat(out, " is ");
-                    strcat(out, age);
-                    strcat(out, " years old.");
-
-                    SetWindowText(hOut, out);
-                break;
-
             }
         break;
 
@@ -130,97 +120,12 @@ LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
             return DefWindowProcW(hWnd, msg, wp, lp);
     }
 
-}
-
-void AddMenus(HWND hWnd)
-{
-    hMenu = CreateMenu();
-    HMENU hFileMenu = CreateMenu(); // file menu popup
-    HMENU hSubMenu  = CreateMenu();
-
-    AppendMenu(hSubMenu, MF_STRING, NULL, "Sub Menu Item"); // changed to dummy menu item
-
-    AppendMenu(hFileMenu, MF_STRING, FILE_MENU_NEW, "New");
-    AppendMenu(hFileMenu, MF_STRING, FILE_MENU_OPEN, "Open");
-    AppendMenu(hFileMenu, MF_POPUP, (UINT_PTR) hSubMenu, "Options");
-    AppendMenu(hFileMenu, MF_SEPARATOR, NULL, NULL);
-    AppendMenu(hFileMenu, MF_STRING, FILE_MENU_EXIT, "Exit");
-
-    // AppendMenu(hMenu, MF_STRING, 1, "File");  // used when just having a string menu button. WM_COMMAND message generated
-    AppendMenu(hMenu, MF_POPUP, (UINT_PTR) hFileMenu, "File");
-    AppendMenu(hMenu, MF_STRING, NULL, "Help");
-
-    SetMenu(hWnd, hMenu);
 }
 
 void AddControls(HWND hWnd)
 {
-    CreateWindowW(L"Static", L"Name: ", WS_VISIBLE | WS_CHILD, 100, 50, 98, 38, hWnd, NULL, NULL, NULL);
-    hName = CreateWindowW(L"Edit", L"", WS_VISIBLE | WS_CHILD | WS_BORDER, 200, 50, 98, 38, hWnd, NULL, NULL, NULL);
-
-    CreateWindowW(L"Static", L"Age: ", WS_VISIBLE | WS_CHILD, 100, 90, 98, 38, hWnd, NULL, NULL, NULL);
-    hAge = CreateWindowW(L"Edit", L"", WS_VISIBLE | WS_CHILD | WS_BORDER, 200, 90, 98, 38, hWnd, NULL, NULL, NULL);
-
-    HWND hBut = CreateWindowW(L"Button", NULL, WS_VISIBLE | WS_CHILD | BS_BITMAP, 150, 140, 98, 38, hWnd, (HMENU) GENERATE_BUTTON, NULL, NULL);
-    SendMessageW(hBut, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM) hGenerateImage);
-
-    hOut = CreateWindowW(L"Edit", L"", WS_VISIBLE | WS_CHILD | WS_BORDER, 100, 200, 300, 200, hWnd, NULL, NULL, NULL);
-    hLogo = CreateWindowW(L"Static", NULL, WS_VISIBLE | WS_CHILD | SS_BITMAP, 350, 60, 100, 100, hWnd, NULL, NULL, NULL);
-    SendMessageW(hLogo, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM) hLogoImage);
-}
-
-void loadImages()
-{
-    hLogoImage = (HBITMAP) LoadImageW(NULL, L"logo.bmp", IMAGE_BITMAP, 100, 100, LR_LOADFROMFILE);
-    hGenerateImage = (HBITMAP) LoadImageW(NULL, L"gen_btn.bmp", IMAGE_BITMAP, 98, 38, LR_LOADFROMFILE);
-}
-
-LRESULT CALLBACK DialogProcedure (HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
-{
-    switch (msg)
-    {
-        case WM_CLOSE:
-            EnableWindow(hMainWindow, true);
-            DestroyWindow(hWnd);
-        break;
-
-        case WM_COMMAND:
-
-            switch (wp)
-            {
-                case 1:
-                    EnableWindow(hMainWindow, true);
-                    DestroyWindow(hWnd);
-                break;
-            }
-
-        break;
-
-        default:
-            return DefWindowProcW(hWnd, msg, wp, lp);
-    }
-}
-
-void registerDialogClass(HINSTANCE hInstance)
-{
-    WNDCLASSW dialog = {0};
-
-    dialog.hbrBackground = (HBRUSH) COLOR_WINDOW;
-    dialog.hCursor       = LoadCursor(NULL, IDC_CROSS);
-    dialog.hInstance     = hInstance;
-    dialog.lpszClassName = L"myDialogClass";
-    dialog.lpfnWndProc   = DialogProcedure;
-
-    RegisterClassW(&dialog);
-}
-
-void displayDialog(HWND hWnd)
-{
-    HWND hDlg = CreateWindowW(L"myDialogClass", L"Dialog", WS_VISIBLE | WS_OVERLAPPEDWINDOW, 400, 400, 200, 200, hWnd, NULL, NULL, NULL);
-
-    CreateWindowW(L"Button", L"Close", WS_VISIBLE | WS_CHILD, 20, 20, 100, 40, hDlg, (HMENU) 1, NULL, NULL);
-
-    EnableWindow(hWnd, false); // disables parent window (modal)
+    CreateWindowW(L"Button", L"Open File", WS_VISIBLE | WS_CHILD, 10, 10, 98, 38, hWnd, (HMENU) OPEN_BUTTON, NULL, NULL);
+    hEdit = CreateWindowW(L"Edit", L"", WS_VISIBLE | WS_CHILD | WS_BORDER | ES_MULTILINE | ES_AUTOVSCROLL, 10, 50, 460, 400, hWnd, NULL, NULL, NULL);
 }
 
 /*** end of file ***/
@@ -235,4 +140,5 @@ void displayDialog(HWND hWnd)
     05 - https://www.youtube.com/watch?v=PTjlGiCvYZU
     06 - https://www.youtube.com/watch?v=R7RvaQR-mm0
     07 - https://www.youtube.com/watch?v=6WJ_fljFmF0
+    08 - https://www.youtube.com/watch?v=-iMGhSlvIR0
 */

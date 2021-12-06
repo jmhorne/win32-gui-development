@@ -50,25 +50,27 @@ void display_file(char * path)
 {
     FILE * file = fopen(path, "rb");
 
-    FILE * log = fopen("log.txt", "a");
-
     fseek(file, 0, SEEK_END);
 
     int size = ftell(file);
-
-    fprintf(log, "\n%s size: %d\n", path, size);
 
     rewind(file);
 
     char * data = (char *) calloc(size, sizeof(char));
 
+    if (!data)
+    {
+        goto EXIT;
+    }
+
     fread(data, size, 1, file);
 
     SetWindowText(hEdit, data);
 
+    EXIT:
+
     free(data);
     fclose(file);
-    fclose(log);
 }
 
 void open_file(HWND hWnd)
@@ -90,6 +92,52 @@ void open_file(HWND hWnd)
     if (strcmp((char *) ofn.lpstrFile, "") != 0)
     {
         display_file((char *) ofn.lpstrFile);
+    }
+
+}
+
+void write_file(char * path)
+{
+    FILE * file = fopen(path, "w");
+
+    int size = GetWindowTextLength(hEdit) + 1;
+
+    char * data = (char *) calloc(size, sizeof(char));
+
+    if (!data)
+    {
+        goto EXIT;
+    }
+
+    GetWindowText(hEdit, data, size);
+
+    fwrite(data, size, 1, file);
+    
+    EXIT:
+
+    free(data);
+    fclose(file);
+}
+
+void save_file(HWND hWnd)
+{
+    OPENFILENAME ofn;
+    ZeroMemory(&ofn, sizeof(OPENFILENAME));
+
+    char filename[100] = {0};
+
+    ofn.lStructSize  = sizeof(OPENFILENAME);
+    ofn.hwndOwner    = hWnd;
+    ofn.lpstrFile    = filename;
+    ofn.nMaxFile     = 100;
+    ofn.lpstrFilter  = "All files\0*.*\0Source Files\0*.CPP\0Text Files\0*.TXT\0";
+    ofn.nFilterIndex = 1;
+
+    GetSaveFileName(&ofn);
+
+    if (strcmp((char *) ofn.lpstrFile, "") != 0)
+    {
+        write_file(ofn.lpstrFile);
     }
 
 }
@@ -116,6 +164,7 @@ LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                 break;
 
                 case SAVE_BUTTON:
+                    save_file(hWnd);
                 break;
             }
         break;
@@ -132,7 +181,7 @@ void AddControls(HWND hWnd)
 
     CreateWindowW(L"Button", L"Save File", WS_VISIBLE | WS_CHILD, 170, 10, 98, 38, hWnd, (HMENU) SAVE_BUTTON, NULL, NULL);
 
-    hEdit = CreateWindowW(L"Edit", L"", WS_VISIBLE | WS_CHILD | WS_BORDER | ES_MULTILINE | ES_AUTOVSCROLL, 10, 50, 460, 400, hWnd, NULL, NULL, NULL);
+    hEdit = CreateWindowW(L"Edit", L"", WS_VISIBLE | WS_CHILD | WS_BORDER | ES_MULTILINE | WS_VSCROLL | WS_HSCROLL , 10, 50, 460, 400, hWnd, NULL, NULL, NULL);
 }
 
 /*** end of file ***/

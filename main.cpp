@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 #define OPEN_BUTTON 1
+#define SAVE_BUTTON 2
 
 #pragma comment(lib, "user32.lib")
 #pragma comment(lib, "Comdlg32.lib") // used for GetOpenFileName
@@ -113,6 +114,9 @@ LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                 case OPEN_BUTTON:
                     open_file(hWnd);
                 break;
+
+                case SAVE_BUTTON:
+                break;
             }
         break;
 
@@ -125,6 +129,9 @@ LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 void AddControls(HWND hWnd)
 {
     CreateWindowW(L"Button", L"Open File", WS_VISIBLE | WS_CHILD, 10, 10, 98, 38, hWnd, (HMENU) OPEN_BUTTON, NULL, NULL);
+
+    CreateWindowW(L"Button", L"Save File", WS_VISIBLE | WS_CHILD, 170, 10, 98, 38, hWnd, (HMENU) SAVE_BUTTON, NULL, NULL);
+
     hEdit = CreateWindowW(L"Edit", L"", WS_VISIBLE | WS_CHILD | WS_BORDER | ES_MULTILINE | ES_AUTOVSCROLL, 10, 50, 460, 400, hWnd, NULL, NULL, NULL);
 }
 
@@ -141,4 +148,5 @@ void AddControls(HWND hWnd)
     06 - https://www.youtube.com/watch?v=R7RvaQR-mm0
     07 - https://www.youtube.com/watch?v=6WJ_fljFmF0
     08 - https://www.youtube.com/watch?v=-iMGhSlvIR0
+    09 - https://www.youtube.com/watch?v=0DrqP2bZFrY
 */
